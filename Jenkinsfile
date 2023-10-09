@@ -40,6 +40,7 @@ node {
                     archiveArtifacts artifacts: "${logFile}", allowEmptyArchive: true
                 }
             }
+        }
         
         // Lets build our docker image
         //dir ('sample-bank-app-service') {
