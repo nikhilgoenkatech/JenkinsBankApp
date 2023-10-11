@@ -5,56 +5,31 @@ node {
         PRODUCTION = "Production"
         execution_id = 0
     } 
+
+    def buildCause = currentBuild.rawBuild.getCause(hudson.model.Cause.UserIdCause)
+    if (buildCause) {
+      buildCause.shortDescription = "Custom cause description: Triggered for commit by nikhil.goenka@dynatrace.com"  
+    }
     
     stage('Checkout') {
         // Checkout our application source code
         git url: 'https://github.com/nikhilgoenkatech/JenkinsBankApp.git'
     }
 
-    stage('Build') {
-            steps {
-                script {
-                    def buildNumber = env.BUILD_NUMBER
-                    def userName = currentBuild.rawBuild.getCause(hudson.model.Cause$UserIdCause).getUserName()
-                    def logFile = "build-${buildNumber}.log"  // Define the name of the log file
-                    
-                    // Execute the 'dir' block and capture its output
-                    def buildOutput = bat(script: """
-                        cd sample-bank-app-service
-                        try {
-                            env.DOCKERFILE = env.DOCKERFILE
-                        }
-                        catch (e) {
-                            echo "Received an exception!!!"
-                            env.DOCKERFILE = "Dockerfile"
-                        }
-                        docker build -t sample-bankapp-service:${buildNumber} -f ${env.DOCKERFILE} .
-                    """, returnStatus: true)
-                    
-                    // Prepend build number and user to each line and write to the log file
-                    writeFile file: "${logFile}", text: buildOutput.split('\n').collect {
-                        "[Build ${buildNumber} by ${userName}] ${it}"
-                    }.join('\n')
-                    
-                    // Optionally, archive the log file for the Build stage
-                    archiveArtifacts artifacts: "${logFile}", allowEmptyArchive: true
-                }
-            }
-        }
-        
+    stage('Build') {        
         // Lets build our docker image
-        //dir ('sample-bank-app-service') {
-        //    try {
-        //        env.DOCKERFILE = env.DOCKERFILE
-        //    }
-        //    catch (e) {
-            //catch (groovy.lang.MissingPropertyException e ) {
-         //       echo "Received an exception!!!"
-         //       env.DOCKERFILE = "Dockerfile"
-         //   }
-          //  def app = docker.build("sample-bankapp-service:${BUILD_NUMBER}", "-f ${env.DOCKERFILE} .")
-        //}
-    //}
+        dir ('sample-bank-app-service') {
+            try {
+                env.DOCKERFILE = env.DOCKERFILE
+            }
+            catch (e) {
+              catch (groovy.lang.MissingPropertyException e ) {
+                echo "Received an exception!!!"
+                env.DOCKERFILE = "Dockerfile"
+            }
+            def app = docker.build("sample-bankapp-service:${BUILD_NUMBER}", "-f ${env.DOCKERFILE} .")
+        }
+    }
     
     stage('CleanStaging') {
         // The cleanup script makes sure no previous docker staging containers run
