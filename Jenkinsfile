@@ -5,11 +5,6 @@ node {
         PRODUCTION = "Production"
         execution_id = 0
     } 
-
-    def buildCause = currentBuild.rawBuild.getCause(hudson.model.Cause.UserIdCause)
-    if (buildCause) {
-      buildCause.shortDescription = "Custom cause description: Triggered for commit by nikhil.goenka@dynatrace.com"  
-    }
     
     stage('Checkout') {
         // Checkout our application source code
@@ -28,6 +23,7 @@ node {
                 env.DOCKERFILE = "Dockerfile"
             }
             def app = docker.build("sample-bankapp-service:${BUILD_NUMBER}", "-f ${env.DOCKERFILE} .")
+            echo "Build Stage Completed"    
         }
     }
     
